@@ -11,6 +11,7 @@
 
 import readlineSync from 'readline-sync';
 
+
 /**
  * We're going to be storing multiple Players
  * with some specific information about them. This
@@ -22,6 +23,8 @@ import readlineSync from 'readline-sync';
  */
 
 export function Player(name, letter) {
+  this.name = name;
+  this.letter = letter;
 
 }
 
@@ -67,7 +70,13 @@ function drawBoard(state) {
  */
 
 export function emptySpotsLeft(state) {
-	// YOUR CODE HERE
+  let hasSpotsLeft = false;
+	state.forEach((row) => {
+    if (row[0] === " " || row[1] === " " || row[2] === " ") {
+      hasSpotsLeft = true;
+    }
+  });
+  return hasSpotsLeft;
 }
 
 /**
@@ -91,7 +100,15 @@ export function emptySpotsLeft(state) {
  */
 
 export function validateMove(state, move) {
-  // YOUR CODE HERE
+  if (move.row < 1 || move.row > 3 || move.column < 1 || move.column > 3) {
+    return false;
+  }
+
+  if (state[move.row - 1][move.column -1] !== " ") {
+    return false;
+  }
+
+  return true;
 }
 /**
  * We need a function to ask a user for their move.
@@ -126,10 +143,29 @@ export function validateMove(state, move) {
 
 function getPlayerMove(state, player) {
 	// DISPLAY CURRENT PLAYER NAME AND LETTER
+  console.log(`${player.name} (${player.letter})` );
 
-  // ASK WHAT ROW THEY WANT
+  let validMove = false;
+  let move = {};
 
-  // ASK WHAT COLUMN THEY WANT
+  while(!validMove) {
+
+    // ASK WHAT ROW THEY WANT
+      const row = readlineSync.question("What row do you want? ");
+
+    // ASK WHAT COLUMN THEY WANT
+    const column = readlineSync.question("What column do you want? ");
+
+
+    move = {
+      row: Number(row),
+      column: Number(column)
+    };
+
+    validMove = validateMove(state, move);
+
+  }
+  return move;
 }
 
 
@@ -159,12 +195,40 @@ function getPlayerMove(state, player) {
  */
 
 export function isGameWon(state) {
+  let winner = false;
   // CHECK FOR HORIZONTAL WINS ON EACH ROW
+    state.forEach((row) => {
+      if (row[0] !== " " && row[0] === row[1] && row[1] === row[2]) {
+        winner = row[0];
+      }
+    });
 
   // CHECK FOR VERTICAL WINS ON EACH COLUMN
+  for (var i = 0; i < 3; i++) {
+    if (state[0][i] !== " " &&
+        state [0][i] === state[1][i] &&
+        state[1][i] === state[2][i]) {
+      winner = state[0][i];
+    }
+  }
+
 
   // CHECK FOR DIAGONAL WINS
+  if (state [0][0] !== " " &&
+      state [0][0] === state[1][1] &&
+      state[1][1] === state[2][2]) {
+    winner = state[0][0];
+  }
+
+  if (state [2][0] !== " " &&
+     state [2][0] === state[1][1] &&
+     state[1][1] === state[0][2]) {
+    winner = state[2][0];
+  }
+
+ return winner;
 }
+
 
 /**
  * Now that we've got our bases covered, we
@@ -206,8 +270,16 @@ export function isGameWon(state) {
 
 function runGame() {
   // DISPLAY WELCOME BANNER
+  console.log("Hello and welcome to tic tac toe.")
 
   // ASK FOR PLAYER NAMES AND CREATE PLAYERS
+  const p1Name = readlineSync.question("What is Player 1's name? ")
+  const p2Name = readlineSync.question("What is Player 2's name? ")
+
+  let players = [
+    new Player(p1Name, 'X'),
+    new Player(p2Name, 'O')
+  ];
 
   // CREATE INITIAL GAME STATE
   var gameBoard = [
@@ -216,21 +288,49 @@ function runGame() {
     [' ', ' ', ' '],
   ];
 
+  let gameOver = false;
+  let currentPlayer = players[0];
+
+
   // WHILE LOOP FOR WHEN GAME IS NOT WON
+    while(!gameOver) {
 
     // DISPLAY BOARD
+    drawBoard(gameBoard);
 
     // GET MOVE FOR CURRENT PLAYER
+    const move = getPlayerMove(gameBoard, currentPlayer);
 
     // UPDATE gameBoard with new move
+    gameBoard[move.row -1] [move.column -1] = currentPlayer.letter;
 
     // CHECK FOR WIN CONDITION
-
     // CHECK FOR MOVES LEFT
+    const didWin = isGameWon(gameBoard);
+    const emptySpots = emptySpotsLeft(gameBoard);
+
+    if (didWin !== false) {
+      console.log(`Congradulations, ${didWin} wins!`)
+      gameOver = true;
+    }
+    else if (!emptySpots) {
+      console.log(`The game is a tie.`);
+      gameOver = true;
+    }
+
 
     // UPDATE CURRENT PLAYER
+      if (currentPlayer === players[0]) {
+        currentPlayer = players[1];
+      }
+      else {
+        currentPlayer = players[0];
+      }
 
-  // CONGRATULATE WINNER OR DECLARE IT A TIE
+
+    }
+
+
 }
 
 /**
